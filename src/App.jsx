@@ -121,6 +121,12 @@ function App() {
     const selectedRefs = updated[index]?.selectedOption?.refs || [];
     const selectedColor = updated[index]?.selectedColorOption?.value;
     const QTY = updated[index]?.qty;
+
+    updated[index]['excelRow']?.map((x, i) =>
+      updated[index]['excelRow'][i]['Total'] =
+      ((updated[index]['excelRow'][i]['PRICE'] * updated[index]['excelRow'][i]['SFT']) + (updated[index]['excelRow'][i]['DRILL_PRICE'] || 0) * QTY).toFixed(2)
+    )
+    setResult(updated);
     console.log(selectedColor, updated[index]?.selectedColorOption?.value);
 
     // Find matching rows from Excel
@@ -132,7 +138,7 @@ function App() {
     // Add qty to each matched row
     const newRows = matchingRows.map(row => ({
       ...row,
-      QTY
+      QTY,
     }));
 
     // Append to result
@@ -220,9 +226,8 @@ function App() {
     });
   };
 
-
-
   console.log(selectedRows)
+
   return (
     <div>
       <div className='flex gap-4 justify-center items-center w-full h-full p-10'>
@@ -233,7 +238,7 @@ function App() {
         <button className='bg-green-500 px-3 py-2.5 rounded-md mr-3 text-white text-xs' onClick={exportSelectedRowsToExcel}>Export</button>
       </div>
 
-      <div className='w-full p-4'>
+      <div className='w-full p-4 '>
         <table className='w-full'>
           <thead className='bg-gray-100'>
             <tr>
@@ -241,8 +246,8 @@ function App() {
               <th className='px-3 py-2 uppercase'>Ref Stickers</th>
               <th className='px-3 py-2 uppercase'>Colours</th>
               <th className='px-3 py-2 uppercase'>Total Quantity</th>
-              <th className='px-3 py-2 uppercase'>Allocated Quantity</th>
-              {/* <th className='px-3 py-2 uppercase'>Total Price</th> */}
+              <th className='px-3 py-2 uppercase'>Rate</th>
+              <th className='px-3 py-2 uppercase'>Drill Price (pcs)</th>
               <th className='px-3 py-2 uppercase'>Action</th>
             </tr>
           </thead>
@@ -311,14 +316,112 @@ function App() {
                     )}
                   </div>
                 </td>
+                {/* price dimension */}
                 <td className='px-3 py-3'>
-                    <div className='flex gap-2'>
-                    <Input className='w-20' />
-                    <Input className='w-20' />
+                  <div className='flex gap-2'>
+                    <div class="relative">
+                      <input type="number" id="floating_outlined"
+                        class="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                        placeholder=" "
+                        onChange={(e) => {
+                          const updated = [...result];
+                          if (updated[index]['excelRow'][0]) {
+                            updated[index]['excelRow'][0]['PRICE'] = e.target.value;
+
+                            // SFT calculation
+                            const dimensionString = row?.excelRow?.[0]['DIMENSIONS'];
+                            const qty = updated[index].qty;
+                            const [length, breadth] = dimensionString
+                              .toLowerCase()
+                              .replace(/\s/g, "")
+                              .split("x")
+                              .map(Number);
+                            updated[index]['excelRow'][0]['SFT'] = isNaN(length) || isNaN(breadth) ? 0 : (((length * breadth) / 930) * qty).toFixed(3);
+                            setResult(updated);
+                          }
+                        }}
+                      />
+                      <label for="floating_outlined" class="absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white dark:bg-gray-900 px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">
+                        {row?.excelRow?.[0] && row?.excelRow?.[0]['DIMENSIONS'] || 'N/A'}
+                      </label>
                     </div>
+                    <div class="relative">
+                      <input type="number" id="floating_outlined"
+                        class="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                        placeholder=" "
+                        onChange={(e) => {
+                          const updated = [...result];
+                          if (updated[index]['excelRow'][1]) {
+                            updated[index]['excelRow'][1]['PRICE'] = e.target.value;
+
+                            // SFT calculation
+                            const dimensionString = row?.excelRow?.[1]['DIMENSIONS'];
+                            const qty = updated[index].qty;
+                            const [length, breadth] = dimensionString
+                              .toLowerCase()
+                              .replace(/\s/g, "")
+                              .split("x")
+                              .map(Number);
+                            updated[index]['excelRow'][1]['SFT'] = (isNaN(length) || isNaN(breadth) ? 0 : ((length * breadth) / 930) * qty).toFixed(3);
+                            setResult(updated);
+                          }
+                        }}
+                      />
+                      <label for="floating_outlined" class="absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white dark:bg-gray-900 px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">
+                        {row?.excelRow?.[1] && row?.excelRow?.[1]['DIMENSIONS'] || 'N/A'}
+                      </label>
+                    </div>
+
+                  </div>
+                </td>
+                {/* drill */}
+                <td className='px-3 py-3'>
+                  <div className='flex gap-2'>
+                    <div class="relative">
+                      <input type="text" id="floating_outlined"
+                        class="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                        placeholder={`${row?.selectedOption?.refs?.[0] || 'N/A'}`} disabled={row?.excelRow?.[0] && row?.excelRow?.[0]['DRILL'] == 'NO DRILL'}
+                        onChange={(e) => {
+                          const updated = [...result];
+                          if (updated[index]['excelRow'][0] && updated[index]['excelRow'][0]['DRILL']) {
+                            const price = e.target.value * updated[index]['excelRow'][0]['DRILL']
+                            updated[index]['excelRow'][0]['DRILL_PRICE'] = price;
+                            setResult(updated);
+                          } else {
+                            alert('Enter price first or excel data mismatch');
+                            console.error('Enter price first or excel data mismatch')
+                          }
+                        }}
+                      />
+                      <label for="floating_outlined" class="absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white dark:bg-gray-900 px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">
+                        {`No.of Drill ${row?.excelRow?.[0] && row?.excelRow?.[0]['DRILL'] || 'N/A'}` || 'N/A'}
+                      </label>
+                    </div>
+                    <div class="relative">
+                      <input type="text" id="floating_outlined"
+                        class="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                        placeholder={`${row?.selectedOption?.refs?.[1] || 'N/A'}`}
+                        disabled={row?.excelRow?.[1] && row?.excelRow?.[1]['DRILL'] == 'NO DRILL'}
+                        onChange={(e) => {
+                          const updated = [...result];
+                          if (updated[index]['excelRow'][1] && updated[index]['excelRow'][1]['DRILL']) {
+                            const price = e.target.value * updated[index]['excelRow'][1]['DRILL']
+                            updated[index]['excelRow'][1]['DRILL_PRICE'] = price;
+                            setResult(updated);
+                          } else {
+                            alert('Enter price first or excel data mismatch');
+                            console.error('Enter price first or excel data mismatch')
+                          }
+                        }}
+                      />
+                      <label for="floating_outlined" class="absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white dark:bg-gray-900 px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">
+                        {` No.of.Drill ${row?.excelRow?.[1] && row?.excelRow?.[1]['DRILL'] || 'N/A'}` || 'N/A'}
+                      </label>
+                    </div>
+                  </div>
                 </td>
                 <td className='px-3 py-3'>
-                  <div className='flex gap-2 p-2 items-center justify-center'>
+                  <div className='flex gap-2 p-2  justify-center'>
                     {index != 0 && (
                       <div>
                         <IconButton variant='text' color='red' className='hover:bg-gray-300 p-2'
